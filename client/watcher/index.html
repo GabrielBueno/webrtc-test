@@ -1,0 +1,21 @@
+<html>
+  <head>
+    <meta charset="utf8">
+    <title>Watcher</title>
+  </head>
+
+  <body>
+    <main>
+      <h1>Watcher</h1>
+
+      <input type="text" v-model="roomName">
+      <button v-on:click="watchStream()">Assistir</button>
+
+      <p></p>
+      <video id="stream" autoplay controls></video>
+    </main>
+
+    <script src="./lib/vue.js"></script>
+    <script src="./app/app.js"></script>
+  </body>
+</html>

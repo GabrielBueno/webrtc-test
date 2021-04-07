@@ -1,0 +1,44 @@
+<html>
+  <head>
+    <meta charset="utf8">
+    <title>Broadcaster</title>
+  </head>
+
+  <body>
+    <main>
+      <h1>Broadcast</h1>
+
+      <h4>Seus Dispositivos</h4>
+      <p>Câmera</p>
+      <select v-model="selectedVideoInput">
+        <option v-for="videodev in devicesAvailable.videoin" v-bind:value="videodev">
+          {{ videodev.label || "Unnamed cam" }}
+        </option>
+      </select>
+
+      <p>Microfone</p>
+      <select v-model="selectedAudioInput">
+        <option v-for="audiodev in devicesAvailable.audioin" v-bind:value="audiodev">
+          {{ audiodev.label || "Unnamed mic " }}
+        </option>
+      </select>
+
+      <p>Nome da sala</p>
+      <input type="text" v-model="roomName">
+
+      <p></p>
+      <button v-on:click="createStream()">Criar stream</button>
+
+      <h4>Seu vídeo</h4>
+      <video id="mystream" autoplay controls></video>
+
+      <p>Logs</p>
+      <ul id="loglist">
+
+      </ul>
+    </main>
+
+    <script src="./lib/vue.js"></script>
+    <script src="./app/app.js"></script>
+  </body>
+</html>
