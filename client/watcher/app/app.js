@@ -3,7 +3,7 @@ const data = {
     sfuPeerConnection: null
 };
 
-const sfuWs = new WebSocket("ws://localhost:8083");
+const sfuWs = new WebSocket("ws://localhost:8083/signal");
 
 // const watchStream = () => {
 //     data.sfuPeerConnection = new RTCPeerConnection();
@@ -51,7 +51,7 @@ const watchStream = () => {
                 }
             };
 
-            const msg = { action: "watch", value: data.roomName, offer };
+            const msg = { intention: "invade", value: data.roomName, offer };
             sfuWs.send(JSON.stringify(msg));
         })
         .catch(err => log(err))

@@ -1,4 +1,4 @@
-module gosfu
+module gofus
 
 go 1.16
 

@@ -12,7 +12,7 @@ const data = {
     sfuWsConnection:    null
 };
 
-const sfuWs = new WebSocket("ws://localhost:8083");
+const sfuWs = new WebSocket("ws://localhost:8083/signal");
 
 function log(msg) {
     const logList = document.getElementById("loglist");
@@ -81,7 +81,7 @@ function createStream() {
                     }
                 };
 
-                const msg = { action: "broadcast", value: data.roomName, offer };
+                const msg = { intention: "broadcast", detail: data.roomName, sdp: offer };
                 sfuWs.send(JSON.stringify(msg));
             })
             .catch(err => log(err))
