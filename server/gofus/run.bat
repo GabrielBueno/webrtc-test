@@ -1,0 +1,1 @@
+go build && .\gofus.exe

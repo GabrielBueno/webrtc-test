@@ -67,21 +67,37 @@ function createStream() {
             console.log("Received track: ", ev);
         }
 
+        data.sfuPeerConnection.onicecandidate = (ev) => {
+            console.log(ev);
+
+            if (ev) {
+                const msg = { Intention: "send_ice", IceCandidate: ev }
+                sfuWs.send(JSON.stringify(msg));
+            }
+        }
+
         data.sfuPeerConnection.createOffer()
             .then(offer => {
                 data.sfuPeerConnection.setLocalDescription(offer);
+                console.log(offer);
 
                 sfuWs.onmessage = ev => {
-                    console.log(ev);
-                    
                     const message = JSON.parse(ev.data);
+                    console.log(message)
 
-                    if (message.answer) {
-                        data.sfuPeerConnection.setRemoteDescription(message.answer);
+                    if (message.Intention === "answer") {
+                        data.sfuPeerConnection.setRemoteDescription(message.Sdp);
+
+                        const finishMsg = { Intention: "finish" };
+                        sfuWs.send(JSON.stringify(finishMsg));
+                    }
+
+                    if (message.Intention === "send_ice" && message.IceCandidate) {
+                        data.sfuPeerConnection.addIceCandidate(message.IceCandidate)
                     }
                 };
 
-                const msg = { intention: "broadcast", detail: data.roomName, sdp: offer };
+                const msg = { Intention: "broadcast", Detail: data.roomName, Sdp: offer };
                 sfuWs.send(JSON.stringify(msg));
             })
             .catch(err => log(err))

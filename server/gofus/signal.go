@@ -12,14 +12,17 @@ import (
 const (
 	BROADCAST_INTENTION = "broadcast"
 	WATCH_INTENTION     = "watch"
+	ANSWER_INTENTION    = "answer"
 	FINISH_INTENTION    = "finish"
 	DENY_INTENTION      = "deny"
+	SEND_ICE_INTENTION  = "send_ice"
 )
 
 type SignalMessage struct {
-	Intention string
-	Detail    string
-	Sdp       *webrtc.SessionDescription
+	Intention    string
+	Detail       string
+	Sdp          *webrtc.SessionDescription
+	IceCandidate *webrtc.ICECandidateInit
 }
 
 func (msg SignalMessage) IsClosingMessage() bool {
@@ -53,8 +56,6 @@ func (signalling *SignallingConnection) listenIncomingMessages() {
 			break
 		}
 
-		log.Println("received sucessfuly")
-
 		var signalMessage SignalMessage
 		err = json.Unmarshal(bytes, &signalMessage)
 
@@ -63,7 +64,6 @@ func (signalling *SignallingConnection) listenIncomingMessages() {
 			break
 		}
 
-		log.Printf("sending %v", signalMessage)
 		signalling.Incoming <- signalMessage
 	}
 }
@@ -88,10 +88,7 @@ func (signalling *SignallingConnection) listenSendingMessages() {
 func (signalling *SignallingConnection) Close() {
 	signalling.WsConn.Close()
 
-	log.Println("Closing incoming chan")
 	close(signalling.Incoming)
-
-	log.Println("Closing incoming send")
 	close(signalling.Sending)
 
 	signalling.IsOpen = false
