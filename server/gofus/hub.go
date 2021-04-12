@@ -108,6 +108,10 @@ func (hub *Hub) processMessage(peer *Peer, msg SignalMessage) {
 		}
 
 	case SEND_ICE_INTENTION:
+		if peer.PeerConn == nil {
+			log.Printf("received ice but PeerConn is nil.\n")
+		}
+
 		if peer.PeerConn != nil && msg.IceCandidate != nil {
 			log.Printf("RECEIVING ICE\n")
 			err := peer.PeerConn.AddICECandidate(*msg.IceCandidate)
