@@ -361,13 +361,8 @@ func (room *Room) listenForWatchers() {
 func defaultBroadcasterPeerConnection() webrtc.Configuration {
 	return webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
-			{URLs: []string{
-				"stun:stun1.l.google.com:19302",
-				"stun:stun2.l.google.com:19302",
-				"stun:stun3.l.google.com:19302",
-				"stun:stun4.l.google.com:19302",
-				"stun:stun.stunprotocol.org:3478",
-			}},
+			{URLs: []string{"stun:stun1.l.google.com:19302"}},
+			{URLs: []string{"stun:stun.stunprotocol.org:3478"}},
 		},
 	}
 }
@@ -375,13 +370,8 @@ func defaultBroadcasterPeerConnection() webrtc.Configuration {
 func defaultWatcherPeerConnection() webrtc.Configuration {
 	return webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
-			{URLs: []string{
-				"stun:stun1.l.google.com:19302",
-				"stun:stun2.l.google.com:19302",
-				"stun:stun3.l.google.com:19302",
-				"stun:stun4.l.google.com:19302",
-				"stun:stun.stunprotocol.org:3478",
-			}},
+			{URLs: []string{"stun:stun1.l.google.com:19302"}},
+			{URLs: []string{"stun:stun.stunprotocol.org:3478"}},
 		},
 	}
 }
