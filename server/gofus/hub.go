@@ -28,8 +28,8 @@ type ConnGateway struct {
 
 type Room struct {
 	Name        string
-	Broadcaster Peer
-	Watchers    []Peer
+	Broadcaster *Peer
+	Watchers    []*Peer
 
 	NewWatcher chan *Peer
 	NewTrack   chan *webrtc.TrackLocalStaticRTP
@@ -143,13 +143,14 @@ func (hub *Hub) newBroadcast(peer *Peer, roomName string, offer *webrtc.SessionD
 		return errors.New("A room with this name already exists")
 	}
 
-	broadcasterPeerConn, err := webrtc.NewPeerConnection(defaultBroadcasterPeerConnection())
+	peerConn, err := webrtc.NewPeerConnection(defaultBroadcasterPeerConnection())
 
 	if err != nil {
 		return errors.New("Couldn't create a connection to the broadcaster peer")
 	}
 
-	_, err = broadcasterPeerConn.AddTransceiverFromKind(webrtc.RTPCodecTypeAudio)
+	peer.PeerConn = peerConn
+	_, err = peer.PeerConn.AddTransceiverFromKind(webrtc.RTPCodecTypeAudio)
 
 	if err != nil {
 		log.Printf("ERR: while adding audio transceiver: %s\n", err)
@@ -158,13 +159,13 @@ func (hub *Hub) newBroadcast(peer *Peer, roomName string, offer *webrtc.SessionD
 
 	newRoom := Room{
 		Name:        roomName,
-		Broadcaster: Peer{PeerConn: broadcasterPeerConn},
+		Broadcaster: peer,
 		NewWatcher:  make(chan *Peer),
 		NewTrack:    make(chan *webrtc.TrackLocalStaticRTP),
 	}
 
 	// On Track Listener
-	broadcasterPeerConn.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
+	peer.PeerConn.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		log.Printf("ONTRACK\n")
 		// Package Loss Indicator sender
 		go func() {
@@ -174,7 +175,7 @@ func (hub *Hub) newBroadcast(peer *Peer, roomName string, offer *webrtc.SessionD
 				pli := rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}
 				packet := []rtcp.Packet{&pli}
 
-				pliSendErr := broadcasterPeerConn.WriteRTCP(packet)
+				pliSendErr := peer.PeerConn.WriteRTCP(packet)
 
 				if pliSendErr != nil {
 					log.Printf("ERR: while sending pli: %s\n", pliSendErr)
@@ -213,21 +214,21 @@ func (hub *Hub) newBroadcast(peer *Peer, roomName string, offer *webrtc.SessionD
 		}
 	})
 
-	err = broadcasterPeerConn.SetRemoteDescription(*offer)
+	err = peer.PeerConn.SetRemoteDescription(*offer)
 
 	if err != nil {
 		log.Printf("err: while accepting broadcast offer: %s\n", err)
 		return errors.New("Couldn't accept offer")
 	}
 
-	answer, err := broadcasterPeerConn.CreateAnswer(nil)
+	answer, err := peer.PeerConn.CreateAnswer(nil)
 
 	if err != nil {
 		log.Printf("err: while creating answer: %s\n", err)
 		return errors.New("Couldn't create answer")
 	}
 
-	broadcasterPeerConn.OnICECandidate(func(iceCandidate *webrtc.ICECandidate) {
+	peer.PeerConn.OnICECandidate(func(iceCandidate *webrtc.ICECandidate) {
 		if iceCandidate != nil {
 			log.Printf("OnICECandidate BROADCASTER: sending ice candidate.\n")
 
@@ -236,7 +237,7 @@ func (hub *Hub) newBroadcast(peer *Peer, roomName string, offer *webrtc.SessionD
 		}
 	})
 
-	err = broadcasterPeerConn.SetLocalDescription(answer)
+	err = peer.PeerConn.SetLocalDescription(answer)
 
 	if err != nil {
 		log.Printf("err: while setting local description for broadcast: %s\n", err)
@@ -260,11 +261,17 @@ func (hub *Hub) watch(peer *Peer, roomName string, offer *webrtc.SessionDescript
 		return errors.New("This room doesn't exist")
 	}
 
-	watcherPeerConn, err := webrtc.NewPeerConnection(defaultWatcherPeerConnection())
+	peerConn, err := webrtc.NewPeerConnection(defaultWatcherPeerConnection())
+
+	if err != nil {
+		log.Printf("err: while creating watcher peer conn: %s\n", err)
+		return errors.New("Couldn't create watcher peer conn")
+	}
+
+	peer.PeerConn = peerConn
 
 	localTrack := <-room.NewTrack
-
-	rtpSender, err := watcherPeerConn.AddTrack(localTrack)
+	rtpSender, err := peer.PeerConn.AddTrack(localTrack)
 
 	if err != nil {
 		log.Printf("err: while adding track to watcher conn: %s\n", err)
@@ -315,21 +322,21 @@ func (hub *Hub) watch(peer *Peer, roomName string, offer *webrtc.SessionDescript
 		return errors.New("Couldn't create peer connection")
 	}
 
-	err = watcherPeerConn.SetRemoteDescription(*offer)
+	err = peer.PeerConn.SetRemoteDescription(*offer)
 
 	if err != nil {
 		log.Printf("err: while accepting watcher offer: %s\n", err)
 		return errors.New("Couldn't accept offer")
 	}
 
-	answer, err := watcherPeerConn.CreateAnswer(nil)
+	answer, err := peer.PeerConn.CreateAnswer(nil)
 
 	if err != nil {
 		log.Printf("err: while creating watcher's answer: %s\n", err)
 		return errors.New("Couldn't create answer")
 	}
 
-	watcherPeerConn.OnICECandidate(func(iceCandidate *webrtc.ICECandidate) {
+	peer.PeerConn.OnICECandidate(func(iceCandidate *webrtc.ICECandidate) {
 		if iceCandidate != nil {
 			log.Printf("OnICECandidate WATCHER: sending ice candidate.\n")
 
@@ -338,7 +345,7 @@ func (hub *Hub) watch(peer *Peer, roomName string, offer *webrtc.SessionDescript
 		}
 	})
 
-	err = watcherPeerConn.SetLocalDescription(answer)
+	err = peer.PeerConn.SetLocalDescription(answer)
 
 	if err != nil {
 		log.Printf("err: while setting local description: %s\n", err)
