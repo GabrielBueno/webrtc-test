@@ -38,9 +38,12 @@ const watchStream = () => {
     });
 
     data.sfuPeerConnection.ontrack = (ev) => {
-        console.log("received track")
-        console.log(ev);
-        document.getElementById("stream").srcObject = ev.streams[0];
+        console.log("received track", ev);
+        
+        const video = document.getElementById("stream");
+
+        if (!video.srcObject)
+            video.srcObject = ev.streams[0];
     }
 
     data.sfuPeerConnection.onicecandidate = (ev) => {
