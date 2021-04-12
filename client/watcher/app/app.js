@@ -3,7 +3,7 @@ const data = {
     sfuPeerConnection: null
 };
 
-const sfuWs = new WebSocket("ws://localhost:8083/signal");
+const sfuWs = new WebSocket("wss://service.gbrl.dev/signal");
 
 // const watchStream = () => {
 //     data.sfuPeerConnection = new RTCPeerConnection();
