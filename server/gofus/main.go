@@ -22,6 +22,6 @@ func main() {
 
 	http.HandleFunc("/signal", connGateway.HandleNewPeerConnection)
 
-	fmt.Printf("GOFUS\nListening on 8083...\n\n")
-	http.ListenAndServe(":8083", nil)
+	fmt.Printf("GOFUS\nListening on 3000...\n\n")
+	http.ListenAndServe(":3000", nil)
 }
