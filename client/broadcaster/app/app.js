@@ -76,7 +76,7 @@ function createStream() {
             console.log(ev);
 
             if (ev) {
-                const msg = { Intention: "send_ice", IceCandidate: ev }
+                const msg = { Intention: "send_ice", IceCandidate: ev.candidate }
                 sfuWs.send(JSON.stringify(msg));
             }
         }
