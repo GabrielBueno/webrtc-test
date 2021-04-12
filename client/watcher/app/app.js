@@ -32,11 +32,11 @@ const sfuWs = new WebSocket("wss://service.gbrl.dev/signal");
 const watchStream = () => {
     data.sfuPeerConnection = new RTCPeerConnection({ 
         iceServers: [
-            "stun:stun1.l.google.com:19302",
-            "stun:stun2.l.google.com:19302",
-            "stun:stun3.l.google.com:19302",
-            "stun:stun4.l.google.com:19302",
-            "stun:stun.stunprotocol.org:3478",
+            { urls: "stun:stun1.l.google.com:19302" },
+            { urls: "stun:stun2.l.google.com:19302" },
+            { urls: "stun:stun3.l.google.com:19302" },
+            { urls: "stun:stun4.l.google.com:19302" },
+            { urls: "stun:stun.stunprotocol.org:3478" },
         ] 
     });
 
