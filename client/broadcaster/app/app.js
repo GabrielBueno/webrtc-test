@@ -12,7 +12,8 @@ const data = {
     sfuWsConnection:    null
 };
 
-const sfuWs = new WebSocket("wss://service.gbrl.dev/signal");
+// const sfuWs = new WebSocket("wss://service.gbrl.dev/signal");
+const sfuWs = new WebSocket("ws://localhost:3000/signal");
 
 function log(msg) {
     const logList = document.getElementById("loglist");
@@ -116,7 +117,7 @@ function resetStream() {
     return navigator.mediaDevices.getUserMedia(constraints)
         .then(stream => {
             data.mediaStream = stream;
-            // video.srcObject  = data.mediaStream;
+            video.srcObject  = data.mediaStream;
         })
 };
 

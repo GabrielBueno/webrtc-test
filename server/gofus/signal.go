@@ -43,7 +43,7 @@ func (signalling *SignallingConnection) Send(msg SignalMessage) {
 	}
 }
 
-func (signalling *SignallingConnection) listenIncomingMessages() {
+func (signalling *SignallingConnection) ListenIncomingMessages() {
 	for signalling.IsOpen {
 		_, bytes, err := signalling.WsConn.ReadMessage()
 
@@ -68,7 +68,7 @@ func (signalling *SignallingConnection) listenIncomingMessages() {
 	}
 }
 
-func (signalling *SignallingConnection) listenSendingMessages() {
+func (signalling *SignallingConnection) ListenSendingMessages() {
 	for signalling.IsOpen {
 		select {
 		case msg := <-signalling.Sending:
@@ -122,8 +122,8 @@ func (pool *SignallingConectionPool) CreateSignallingConnection(w http.ResponseW
 		IsOpen:   true,
 	}
 
-	go signalling.listenIncomingMessages()
-	go signalling.listenSendingMessages()
+	go signalling.ListenIncomingMessages()
+	go signalling.ListenSendingMessages()
 
 	pool.NewConnection <- &signalling
 }

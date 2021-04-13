@@ -1,9 +1,11 @@
 const data = {
     roomName:          "",
-    sfuPeerConnection: null
+    sfuPeerConnection: null,
+    tracks:            []
 };
 
-const sfuWs = new WebSocket("wss://service.gbrl.dev/signal");
+// const sfuWs = new WebSocket("wss://service.gbrl.dev/signal");
+const sfuWs = new WebSocket("ws://localhost:3000/signal");
 
 // const watchStream = () => {
 //     data.sfuPeerConnection = new RTCPeerConnection();
@@ -39,6 +41,7 @@ const watchStream = () => {
 
     data.sfuPeerConnection.ontrack = (ev) => {
         console.log("received track", ev);
+        data.tracks.push(ev);
         
         const video = document.getElementById("stream");
 

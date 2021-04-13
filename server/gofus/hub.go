@@ -30,6 +30,7 @@ type Room struct {
 	Name        string
 	Broadcaster *Peer
 	Watchers    []*Peer
+	Tracks      []*webrtc.TrackLocalStaticRTP
 
 	NewWatcher chan *Peer
 	NewTrack   chan *webrtc.TrackLocalStaticRTP
@@ -68,8 +69,8 @@ func (gateway *ConnGateway) HandleNewPeerConnection(w http.ResponseWriter, r *ht
 		},
 	}
 
-	go peer.SignalConn.listenIncomingMessages()
-	go peer.SignalConn.listenSendingMessages()
+	go peer.SignalConn.ListenIncomingMessages()
+	go peer.SignalConn.ListenSendingMessages()
 
 	gateway.NewPeer <- &peer
 }
@@ -150,6 +151,14 @@ func (hub *Hub) newBroadcast(peer *Peer, roomName string, offer *webrtc.SessionD
 	}
 
 	peer.PeerConn = peerConn
+
+	_, err = peer.PeerConn.AddTransceiverFromKind(webrtc.RTPCodecTypeVideo)
+
+	if err != nil {
+		log.Printf("ERR: while adding video transceiver: %s\n", err)
+		return errors.New("Couldn't add video transceiver")
+	}
+
 	_, err = peer.PeerConn.AddTransceiverFromKind(webrtc.RTPCodecTypeAudio)
 
 	if err != nil {
@@ -160,6 +169,8 @@ func (hub *Hub) newBroadcast(peer *Peer, roomName string, offer *webrtc.SessionD
 	newRoom := Room{
 		Name:        roomName,
 		Broadcaster: peer,
+		Watchers:    make([]*Peer, 0),
+		Tracks:      make([]*webrtc.TrackLocalStaticRTP, 0),
 		NewWatcher:  make(chan *Peer),
 		NewTrack:    make(chan *webrtc.TrackLocalStaticRTP),
 	}
@@ -192,7 +203,10 @@ func (hub *Hub) newBroadcast(peer *Peer, roomName string, offer *webrtc.SessionD
 			return
 		}
 
-		newRoom.NewTrack <- localTrack
+		// newRoom.NewTrack <- localTrack
+		newRoom.Tracks = append(newRoom.Tracks, localTrack)
+
+		log.Printf("tracks after append: %v\n", newRoom.Tracks)
 
 		rtpBuffer := make([]byte, 1400)
 
@@ -270,52 +284,31 @@ func (hub *Hub) watch(peer *Peer, roomName string, offer *webrtc.SessionDescript
 
 	peer.PeerConn = peerConn
 
-	localTrack := <-room.NewTrack
-	rtpSender, err := peer.PeerConn.AddTrack(localTrack)
+	// localTrack := <-room.NewTrack
 
-	if err != nil {
-		log.Printf("err: while adding track to watcher conn: %s\n", err)
-		return errors.New("Couldn't add track")
-	}
+	log.Printf("tracks to watch: %v\n", room.Tracks)
+	for _, localTrack := range room.Tracks {
+		log.Printf("new track\n")
+		rtpSender, err := peer.PeerConn.AddTrack(localTrack)
 
-	go func() {
-		rtcpBuffer := make([]byte, 1500)
-
-		for {
-			_, _, rtcpReadErr := rtpSender.Read(rtcpBuffer)
-
-			if rtcpReadErr != nil {
-				log.Printf("err: reading rtpcBuffer from watcher rtpSender: %s\n", rtcpReadErr)
-				return
-			}
+		if err != nil {
+			log.Printf("err: while adding track to watcher conn: %s\n", err)
+			return errors.New("Couldn't add track")
 		}
-	}()
 
-	// go func() {
-	// 	for {
-	// 		localTrack := <-room.newTrack
+		go func() {
+			rtcpBuffer := make([]byte, 1500)
 
-	// 		rtpSender, err := watcherPeerConn.AddTrack(localTrack)
+			for {
+				_, _, rtcpReadErr := rtpSender.Read(rtcpBuffer)
 
-	// 		if err != nil {
-	// 			log.Printf("err: while adding track to watcher conn: %s\n", err)
-	// 			return
-	// 		}
-
-	// 		go func() {
-	// 			rtcpBuffer := make([]byte, 1500)
-
-	// 			for {
-	// 				_, _, rtcpReadErr := rtpSender.Read(rtcpBuffer)
-
-	// 				if rtcpReadErr != nil {
-	// 					log.Printf("err: reading rtpcBuffer from watcher rtpSender: %s\n", rtcpReadErr)
-	// 					return
-	// 				}
-	// 			}
-	// 		}()
-	// 	}
-	// }()
+				if rtcpReadErr != nil {
+					log.Printf("err: reading rtpcBuffer from watcher rtpSender: %s\n", rtcpReadErr)
+					return
+				}
+			}
+		}()
+	}
 
 	if err != nil {
 		log.Printf("err: while creating peer conn for watcher: %s\n", err)
