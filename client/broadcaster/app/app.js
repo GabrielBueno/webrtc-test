@@ -12,8 +12,8 @@ const data = {
     sfuWsConnection:    null
 };
 
-// const sfuWs = new WebSocket("wss://service.gbrl.dev/signal");
-const sfuWs = new WebSocket("ws://localhost:3000/signal");
+const sfuWs = new WebSocket("wss://service.gbrl.dev/signal");
+// const sfuWs = new WebSocket("ws://localhost:3000/signal");
 
 function log(msg) {
     const logList = document.getElementById("loglist");

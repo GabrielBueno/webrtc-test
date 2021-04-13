@@ -4,8 +4,8 @@ const data = {
     tracks:            []
 };
 
-// const sfuWs = new WebSocket("wss://service.gbrl.dev/signal");
-const sfuWs = new WebSocket("ws://localhost:3000/signal");
+const sfuWs = new WebSocket("wss://service.gbrl.dev/signal");
+// const sfuWs = new WebSocket("ws://localhost:3000/signal");
 
 // const watchStream = () => {
 //     data.sfuPeerConnection = new RTCPeerConnection();
